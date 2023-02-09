@@ -29,78 +29,11 @@
 
 <body data-new-gr-c-s-check-loaded="14.1026.0" data-gr-ext-installed="">
 
-    <input type="checkbox" id="toggleModalityLUT">Apply Modality LUT</input>
-    <input type="checkbox" id="toggleVOILUT">Apply VOI LUT</input>
-
-
+    <input type="checkbox" id="toggleModalityLUT" style="display:none;">Apply Modality LUT</input>
+    <input type="checkbox" id="toggleVOILUT" style="display:none;">Apply VOI LUT</input>
 
     <div class="wrapper">
-        <div class="left-side">
-            <div class="personal-info">
-                <div class="personal-info-title">
-                    <button>
-                        <i class="bi bi-arrow-left-short"></i>
-                    </button>
-                    <div class="name">
-                        <p>Jonathan</p>
-                        <p>Chan</p>
-                    </div>
-                </div>
-                <div class="personal-info-detail">
-                    <div class="detail-row">
-                        <p class="personal-info-detail-title">Age / Sex</p>
-                        <p class="personal-info-detail-value">29y / M</p>
-                    </div>
-                    <div class="detail-row">
-                        <p class="personal-info-detail-title">Unit</p>
-                        <p class="personal-info-detail-value">ICU4P</p>
-                    </div>
-                    <div class="detail-row">
-                        <p class="personal-info-detail-title">Bed #</p>
-                        <p class="personal-info-detail-value">Bed032</p>
-                    </div>
-                    <div class="detail-row">
-                        <p class="personal-info-detail-title">Lifet....</p>
-                        <p class="personal-info-detail-value">MRN041</p>
-                    </div>
-                    <div class="detail-row">
-                        <p class="personal-info-detail-title">LOS</p>
-                        <p class="personal-info-detail-value">20 days</p>
-                    </div>
-                </div>
-            </div>
-            <div class="left-bar-menu">
-                <h1>Report</h1>
-                <div class="left-bar-menu-detail">
-                    <div class="left-bar-nav">
-                        <p>PACS Images</p>
-                    </div>
-                    <div class="left-bar-nav">
-                        <p>Medical Report (Cardi)</p>
-                    </div>
-                    <div class="left-bar-nav">
-                        <p>ECG</p>
-                    </div>
-                    <div class="left-bar-nav">
-                        <p>Blood Pressure</p>
-                    </div>
-                    <div class="left-bar-nav">
-                        <p>Blood Test Report</p>
-                    </div>
-                </div>
 
-            </div>
-            <div class="left-bar-footer">
-                <div class="nav-1">
-                    <div class="icon"><i class="bi bi-telephone"></i></div>
-                    <div class="text">Comm</div>
-                </div>
-                <div class="nav-2">
-                    <div class="icon"><i class="bi bi-calendar"></i></div>
-                    <div class="text">Scheduler</div>
-                </div>
-            </div>
-        </div>
         <div class="right-side">
             <div class="right-menu">
                 <div class="right-menu-time">
@@ -304,14 +237,15 @@
     <script src="./index_files/utils/initializeWebWorkers.js"></script>
 
     <script type="module">
-        $('#hflip-fake').click(function () {
-            // $('#hflip').trigger('click');
-            const viewport = cornerstone.getViewport(element);
-            viewport.hflip = !viewport.hflip;
-            cornerstone.setViewport(element, viewport);
+        var currentDeg = 0;
+        $('#hflip-fake').click(function() {
+            currentDeg = currentDeg - 90;
+            document.getElementById("dicomImage").style.transform = 'rotate(' + currentDeg + 'deg)';
         })
-        $('#vflip-fake').click(function () {
-            $('#vflip').trigger('click');
+        
+        $('#vflip-fake').click(function() {
+            currentDeg = currentDeg + 90;
+            document.getElementById("dicomImage").style.transform = 'rotate(' + currentDeg + 'deg)';
         })
         $('.zoom-btn').change(function () {
             if ($(this).val() == 1) {
@@ -451,7 +385,7 @@
             const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
             loadAndViewImage(imageId);
         }
-        
+
         // createFile('http://localhost:3000/1.dcm');
         
             // load and display the image
