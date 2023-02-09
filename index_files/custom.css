@@ -188,10 +188,8 @@
 }
 .right-content {
     position: absolute;
-    width: 78%;
-    height: 85.44%;
-    left: 22%;
-    top: 14.55%;
+    width: 1065px;
+    height: 875px;
 
     background: #050505;
 }
