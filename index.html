@@ -29,7 +29,8 @@
 
 <body data-new-gr-c-s-check-loaded="14.1026.0" data-gr-ext-installed="">
 
-
+    <input type="checkbox" id="toggleModalityLUT">Apply Modality LUT</input>
+    <input type="checkbox" id="toggleVOILUT">Apply VOI LUT</input>
 
 
 
@@ -212,7 +213,7 @@
                 </div>
                 <div class="current-filter">
                     <p>Zoom: 100%</p>
-                    <p>WL: 127 WW: 255</p>
+                    <p id="wl">WL: 127 WW: 255</p>
                 </div>
                 <div class="container">
                     <button id="x256" class="btn" style="display: none;">256x256</button>
@@ -234,24 +235,54 @@
                                 width="512" height="512"></canvas>
                         </div>
 
-                        <div id="topleft" class="overlay" style="position:absolute;top:0px;left:0px;display:none;">
+                        <div id="topleft" class="overlay" style="position:absolute;top:0px;left:0px;">
                             Patient Name
                         </div>
-                        <div id="topright" class="overlay" style="position:absolute;top:0px;right:0px;display:none;">
+                        <div id="topright" class="overlay" style="position:absolute;top:0px;right:0px;">
                             Render Time:0 ms</div>
                         <div id="bottomright" class="overlay"
-                            style="position:absolute;bottom:0px;right:0px;display:none;">Zoom:2.00</div>
+                            style="position:absolute;bottom:0px;right:0px;">Zoom:2.00</div>
                         <div id="bottomleft" class="overlay"
-                            style="position:absolute;bottom:0px;left:0px;display:none;">WW/WL:267/136</div>
+                            style="position:absolute;bottom:0px;left:0px;">WW/WL:267/136</div>
                     </div>
 
-                    <div style="display:none;"><span id="coords">pageX=1400, pageY=614, pixelX=245,
+                    <div style=""><span id="coords">pageX=1400, pageY=614, pixelX=245,
                             pixelY=170.203125</span></div>
 
+                </div>
+
+                <div class="col-md-6" style="display:none;">
+                    <span>Transfer Syntax: </span><span id="transferSyntax"></span><br>
+                    <span>SOP Class: </span><span id="sopClass"></span><br>
+                    <span>Samples Per Pixel: </span><span id="samplesPerPixel"></span><br>
+                    <span>Photometric Interpretation: </span><span id="photometricInterpretation"></span><br>
+                    <span>Number Of Frames: </span><span id="numberOfFrames"></span><br>
+                    <span>Planar Configuration: </span><span id="planarConfiguration"></span><br>
+                    <span>Rows: </span><span id="rows"></span><br>
+                    <span>Columns: </span><span id="columns"></span><br>
+                    <span>Pixel Spacing: </span><span id="pixelSpacing"></span><br>
+                    <span>Bits Allocated: </span><span id="bitsAllocated"></span><br>
+                    <span>Bits Stored: </span><span id="bitsStored"></span><br>
+                    <span>High Bit: </span><span id="highBit"></span><br>
+                    <span>Pixel Representation: </span><span id="pixelRepresentation"></span><br>
+                    <span>WindowCenter: </span><span id="windowCenter"></span><br>
+                    <span>WindowWidth: </span><span id="windowWidth"></span><br>
+                    <span>RescaleIntercept: </span><span id="rescaleIntercept"></span><br>
+                    <span>RescaleSlope: </span><span id="rescaleSlope"></span><br>
+                    <span>Basic Offset Table Entries: </span><span id="basicOffsetTable"></span><br>
+                    <span>Fragments: </span><span id="fragments"></span><br>
+                    <span>Min Stored Pixel Value: </span><span id="minStoredPixelValue"></span><br>
+                    <span>Max Stored Pixel Value: </span><span id="maxStoredPixelValue"></span><br>
+                    <span>Total Time: </span><span id="totalTime"></span><br>
+                    <span>Load Time: </span><span id="loadTime"></span><br>
+                    <span>Decode Time: </span><span id="decodeTime"></span><br>
+        
                 </div>
             </div>
         </div>
     </div>
+
+    <input type="file" id="selectFile">
 
 
     <!-- include the cornerstone library -->
@@ -274,7 +305,10 @@
 
     <script type="module">
         $('#hflip-fake').click(function () {
-            $('#hflip').trigger('click');
+            // $('#hflip').trigger('click');
+            const viewport = cornerstone.getViewport(element);
+            viewport.hflip = !viewport.hflip;
+            cornerstone.setViewport(element, viewport);
         })
         $('#vflip-fake').click(function () {
             $('#vflip').trigger('click');
@@ -297,245 +331,131 @@
             },
         });
 
-        run();
-        async function run() {
-            var data = null;
-
-            var dicomUrl = "https://raw.githubusercontent.com/wearemothership/dicom-test-files/main/dicom-ts-issues/parse-issue-19.dcm";
-
-            var response = await fetch(dicomUrl);
-
-            var buffer = await response.arrayBuffer();
-
-            function setData(buffer) {
-                data = new Int8Array(buffer);
-            }
-
-        function loadAndViewImage(imageId) {
         const element = document.getElementById('dicomImage');
-        const start = new Date().getTime();
-        cornerstone.loadImage(imageId).then(function(image) {
-            console.log(image);
-            const viewport = cornerstone.getDefaultViewportForImage(element, image);
-            document.getElementById('toggleModalityLUT').checked = (viewport.modalityLUT !== undefined);
-            document.getElementById('toggleVOILUT').checked = (viewport.voiLUT !== undefined);
-            cornerstone.displayImage(element, image, viewport);
-            if(loaded === false) {
-                cornerstoneTools.mouseInput.enable(element);
-                cornerstoneTools.mouseWheelInput.enable(element);
-                cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
-                cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
-                cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
-                cornerstoneTools.zoomWheel.activate(element); // zoom is the default tool for middle mouse wheel
+        cornerstone.enable(element);
 
-                cornerstoneTools.imageStats.enable(element);
-                loaded = true;
-            }
+        // setup handlers before we display the image
+        function onImageRendered(e) {
+            const eventData = e.detail;
 
-            function getTransferSyntax() {
-                const value = image.data.string('x00020010');
-                return value + ' [' + uids[value] + ']';
-            }
+            // set the canvas context to the image coordinate system
+            cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
 
-            function getSopClass() {
-                const value = image.data.string('x00080016');
-                return value + ' [' + uids[value] + ']';
-            }
+            // NOTE: The coordinate system of the canvas is in image pixel space.  Drawing
+            // to location 0,0 will be the top left of the image and rows,columns is the bottom
+            // right.
+            const context = eventData.canvasContext;
+            context.beginPath();
+            context.strokeStyle = 'white';
+            context.lineWidth = .5;
+            context.rect(128, 90, 50, 60);
+            context.stroke();
+            context.fillStyle = "white";
+            context.font = "6px Arial";
+            context.fillText("Tumor Here", 128, 85);
 
-            function getPixelRepresentation() {
-                const value = image.data.uint16('x00280103');
-                if(value === undefined) {
-                    return;
-                }
-                return value + (value === 0 ? ' (unsigned)' : ' (signed)');
-            }
+            document.getElementById('topright').textContent = "Render Time:" + eventData.renderTimeInMs + " ms";
+            document.getElementById('wl').textContent = "WW/WL:" + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter);
+            document.getElementById('bottomright').textContent = "Zoom:" + eventData.viewport.scale.toFixed(2);
 
-            function getPlanarConfiguration() {
-                const value = image.data.uint16('x00280006');
-                if(value === undefined) {
-                    return;
-                }
-                return value + (value === 0 ? ' (pixel)' : ' (plane)');
-            }
-
-            document.getElementById('transferSyntax').textContent = getTransferSyntax();
-            document.getElementById('sopClass').textContent = getSopClass();
-            document.getElementById('samplesPerPixel').textContent = image.data.uint16('x00280002');
-            document.getElementById('photometricInterpretation').textContent = image.data.string('x00280004');
-            document.getElementById('numberOfFrames').textContent = image.data.string('x00280008');
-            document.getElementById('planarConfiguration').textContent = getPlanarConfiguration();
-            document.getElementById('rows').textContent = image.data.uint16('x00280010');
-            document.getElementById('columns').textContent = image.data.uint16('x00280011');
-            document.getElementById('pixelSpacing').textContent = image.data.string('x00280030');
-            document.getElementById('bitsAllocated').textContent = image.data.uint16('x00280100');
-            document.getElementById('bitsStored').textContent = image.data.uint16('x00280101');
-            document.getElementById('highBit').textContent = image.data.uint16('x00280102');
-            document.getElementById('pixelRepresentation').textContent = getPixelRepresentation();
-            document.getElementById('windowCenter').textContent = image.data.string('x00281050');
-            document.getElementById('windowWidth').textContent = image.data.string('x00281051');
-            document.getElementById('rescaleIntercept').textContent = image.data.string('x00281052');
-            document.getElementById('rescaleSlope').textContent = image.data.string('x00281053');
-            document.getElementById('basicOffsetTable').textContent = image.data.elements.x7fe00010 && image.data.elements.x7fe00010.basicOffsetTable ? image.data.elements.x7fe00010.basicOffsetTable.length : '';
-            document.getElementById('fragments').textContent = image.data.elements.x7fe00010 && image.data.elements.x7fe00010.fragments ? image.data.elements.x7fe00010.fragments.length : '';
-            document.getElementById('minStoredPixelValue').textContent = image.minPixelValue;
-            document.getElementById('maxStoredPixelValue').textContent = image.maxPixelValue;
-            const end = new Date().getTime();
-            const time = end - start;
-            document.getElementById('totalTime').textContent = time + "ms";
-            document.getElementById('loadTime').textContent = image.loadTimeInMS + "ms";
-            document.getElementById('decodeTime').textContent = image.decodeTimeInMS + "ms";
-
-        }, function(err) {
-            alert(err);
-        });
-    }
-
-            function register() {
-                function loadImage(imageId) {
-                    // Parse the imageId and return a usable URL (logic omitted)
-                    console.log({ imageId, cornerstoneWADOImageLoader })
-                    const url = cornerstoneWADOImageLoader.wadouri.parseImageId(imageId);
-                    // const url = "http://localhost:3000/1.dcm"
-                    
-                    console.log({url})
-
-                    // Create a new Promise
-                    const promise = new Promise((resolve, reject) => {
-                        // Inside the Promise Constructor, make
-                        // the request for the DICOM data
-                        const oReq = new XMLHttpRequest();
-                        oReq.open('get', url, true);
-                        oReq.responseType = 'arraybuffer';
-                        oReq.onreadystatechange = function (oEvent) {
-                            if (oReq.readyState === 4) {
-                                if (oReq.status == 200) {
-                                    // Request succeeded, Create an image object (logic omitted)
-                                    console.log({oReq})
-                                    const image = createImageObject(oReq.response);
-
-
-                                    // Return the image object by resolving the Promise
-                                    resolve(image);
-                                } else {
-                                    // An error occurred, return an object containing the error by
-                                    // rejecting the Promise
-                                    reject(new Error(oReq.statusText));
-                                }
-                            }
-                        };
-
-                        oReq.send();
-                    });
-
-                    // Return an object containing the Promise to cornerstone so it can setup callbacks to be
-                    // invoked asynchronously for the success/resolve and failure/reject scenarios.
-                    return {
-                        promise,
-                    };
-                }
-
-                // function getExampleImage(imageId) {
-
-                //     const width = 256;
-                //     const height = 256;
-                //     function getPixelData() {
-                //         if (imageId === 'example://1') {
-                //             console.log(data);
-                //             return data;
-                //         } else if (imageId === 'example://2') {
-                //             return data;
-                //         }
-
-                //         throw "unknown imageId";
-                //     }
-
-                //     var image = {
-                //         imageId: imageId,
-                //         minPixelValue: 0,
-                //         maxPixelValue: 257,
-                //         slope: 1.0,
-                //         intercept: 0,
-                //         windowCenter: 127,
-                //         windowWidth: 256,
-                //         getPixelData: getPixelData,
-                //         rows: height,
-                //         columns: width,
-                //         height: height,
-                //         width: width,
-                //         color: false,
-                //         columnPixelSpacing: .8984375,
-                //         rowPixelSpacing: .8984375,
-                //         sizeInBytes: width * height * 2
-                //     };
-
-                //     return {
-                //         promise: new Promise((resolve) => {
-                //             resolve(image);
-                //         }),
-                //         cancelFn: undefined
-                //     };
-                // }
-
-
-                console.log({cornerstone})
-                // registration
-                cornerstone.registerImageLoader('wadouri', loadImage);
-
-            }
-
-            function call() {
-                const imageIds = [
-                    'wadouri:http://localhost:3000/1.dcm',
-                    // 'wadouri://http://localhost:3000/2',
-                ];
-
-                let currentImageIndex = 0;
-
-                // updates the image display
-                function updateTheImage(imageIndex) {
-                    return cornerstone.loadAndCacheImage(imageIds[imageIndex]).then(function (image) {
-                        console.log({ image });
-                        currentImageIndex = imageIndex;
-                        const viewport = cornerstone.getViewport(element);
-                        cornerstone.displayImage(element, image, viewport);
-                    });
-
-                    // return loadAndViewImage(imageIndex)
-                }
-
-                // image enable the element
+        }
+        element.addEventListener('cornerstoneimagerendered', onImageRendered);
+    
+        let loaded = false;
+        function loadAndViewImage(imageId) {
                 const element = document.getElementById('dicomImage');
-                cornerstone.enable(element);
+                const start = new Date().getTime();
+                cornerstone.loadImage(imageId).then(function(image) {
+                    const viewport = cornerstone.getDefaultViewportForImage(element, image);
+                    document.getElementById('toggleModalityLUT').checked = (viewport.modalityLUT !== undefined);
+                    document.getElementById('toggleVOILUT').checked = (viewport.voiLUT !== undefined);
+                    cornerstone.displayImage(element, image, viewport);
+                    if(loaded === false) {
+                        cornerstoneTools.mouseInput.enable(element);
+                        cornerstoneTools.mouseWheelInput.enable(element);
+                        cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
+                        cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
+                        cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
+                        cornerstoneTools.zoomWheel.activate(element); // zoom is the default tool for middle mouse wheel
 
-                // setup handlers before we display the image
-                function onImageRendered(e) {
-                    const eventData = e.detail;
+                        cornerstoneTools.imageStats.enable(element);
+                        loaded = true;
+                    }
 
-                    // set the canvas context to the image coordinate system
-                    cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
+                    function getTransferSyntax() {
+                        const value = image.data.string('x00020010');
+                        return value + ' [' + uids[value] + ']';
+                    }
 
-                    // NOTE: The coordinate system of the canvas is in image pixel space.  Drawing
-                    // to location 0,0 will be the top left of the image and rows,columns is the bottom
-                    // right.
-                    const context = eventData.canvasContext;
-                    context.beginPath();
-                    context.strokeStyle = 'white';
-                    context.lineWidth = .5;
-                    context.rect(128, 90, 50, 60);
-                    context.stroke();
-                    context.fillStyle = "white";
-                    context.font = "6px Arial";
-                    context.fillText("Tumor Here", 128, 85);
+                    function getSopClass() {
+                        const value = image.data.string('x00080016');
+                        return value + ' [' + uids[value] + ']';
+                    }
 
-                    document.getElementById('topright').textContent = "Render Time:" + eventData.renderTimeInMs + " ms";
-                    document.getElementById('bottomleft').textContent = "WW/WL:" + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter);
-                    document.getElementById('bottomright').textContent = "Zoom:" + eventData.viewport.scale.toFixed(2);
+                    function getPixelRepresentation() {
+                        const value = image.data.uint16('x00280103');
+                        if(value === undefined) {
+                            return;
+                        }
+                        return value + (value === 0 ? ' (unsigned)' : ' (signed)');
+                    }
 
-                }
-                element.addEventListener('cornerstoneimagerendered', onImageRendered);
+                    function getPlanarConfiguration() {
+                        const value = image.data.uint16('x00280006');
+                        if(value === undefined) {
+                            return;
+                        }
+                        return value + (value === 0 ? ' (pixel)' : ' (plane)');
+                    }
 
-                // load and display the image
-                const imagePromise = updateTheImage(0);
+                    document.getElementById('transferSyntax').textContent = getTransferSyntax();
+                    document.getElementById('sopClass').textContent = getSopClass();
+                    document.getElementById('samplesPerPixel').textContent = image.data.uint16('x00280002');
+                    document.getElementById('photometricInterpretation').textContent = image.data.string('x00280004');
+                    document.getElementById('numberOfFrames').textContent = image.data.string('x00280008');
+                    document.getElementById('planarConfiguration').textContent = getPlanarConfiguration();
+                    document.getElementById('rows').textContent = image.data.uint16('x00280010');
+                    document.getElementById('columns').textContent = image.data.uint16('x00280011');
+                    document.getElementById('pixelSpacing').textContent = image.data.string('x00280030');
+                    document.getElementById('bitsAllocated').textContent = image.data.uint16('x00280100');
+                    document.getElementById('bitsStored').textContent = image.data.uint16('x00280101');
+                    document.getElementById('highBit').textContent = image.data.uint16('x00280102');
+                    document.getElementById('pixelRepresentation').textContent = getPixelRepresentation();
+                    document.getElementById('windowCenter').textContent = image.data.string('x00281050');
+                    document.getElementById('windowWidth').textContent = image.data.string('x00281051');
+                    document.getElementById('rescaleIntercept').textContent = image.data.string('x00281052');
+                    document.getElementById('rescaleSlope').textContent = image.data.string('x00281053');
+                    document.getElementById('basicOffsetTable').textContent = image.data.elements.x7fe00010 && image.data.elements.x7fe00010.basicOffsetTable ? image.data.elements.x7fe00010.basicOffsetTable.length : '';
+                    document.getElementById('fragments').textContent = image.data.elements.x7fe00010 && image.data.elements.x7fe00010.fragments ? image.data.elements.x7fe00010.fragments.length : '';
+                    document.getElementById('minStoredPixelValue').textContent = image.minPixelValue;
+                    document.getElementById('maxStoredPixelValue').textContent = image.maxPixelValue;
+                    const end = new Date().getTime();
+                    const time = end - start;
+                    document.getElementById('totalTime').textContent = time + "ms";
+                    document.getElementById('loadTime').textContent = image.loadTimeInMS + "ms";
+                    document.getElementById('decodeTime').textContent = image.decodeTimeInMS + "ms";
+
+                }, function(err) {
+                    alert(err);
+                });
+            }
+
+        async function createFile(url){
+            let response = await fetch(url);
+            let data = await response.blob();
+            // let metadata = {
+            //     type: 'image/jpeg'
+            // };
+            let file = new File([data], "1.dcm");
+            // ... do something with the file or return it
+            const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+            loadAndViewImage(imageId);
+        }
+        
+        // createFile('http://localhost:3000/1.dcm');
+        
+            // load and display the image
+                const imagePromise = createFile('http://localhost:3000/1.dcm');
 
                 // add handlers for mouse events once the image is loaded.
                 imagePromise.then(function () {
@@ -579,24 +499,24 @@
                     });
 
                     const mouseWheelEvents = ['mousewheel', 'DOMMouseScroll'];
-                    mouseWheelEvents.forEach(function (eventType) {
-                        element.addEventListener(eventType, function (e) {
-                            // Firefox e.detail > 0 scroll back, < 0 scroll forward
-                            // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
-                            if (e.wheelDelta < 0 || e.detail > 0) {
-                                if (currentImageIndex === 0) {
-                                    updateTheImage(1);
-                                }
-                            } else {
-                                if (currentImageIndex === 1) {
-                                    updateTheImage(0);
-                                }
-                            }
+                    // mouseWheelEvents.forEach(function (eventType) {
+                    //     element.addEventListener(eventType, function (e) {
+                    //         // Firefox e.detail > 0 scroll back, < 0 scroll forward
+                    //         // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
+                    //         if (e.wheelDelta < 0 || e.detail > 0) {
+                    //             if (currentImageIndex === 0) {
+                    //                 updateTheImage(1);
+                    //             }
+                    //         } else {
+                    //             if (currentImageIndex === 1) {
+                    //                 updateTheImage(0);
+                    //             }
+                    //         }
 
-                            // Prevent page from scrolling
-                            return false;
-                        });
-                    });
+                    //         // Prevent page from scrolling
+                    //         return false;
+                    //     });
+                    // });
 
                     // Add event handler to the ww/wc apply button
                     document.getElementById('x256').addEventListener('click', function (e) {
@@ -643,12 +563,347 @@
                         document.getElementById('coords').textContent = "pageX=" + event.pageX + ", pageY=" + event.pageY + ", pixelX=" + pixelCoords.x + ", pixelY=" + pixelCoords.y;
                     });
                 });
+            // }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+            // run();
+        async function run() {
+            var data = null;
+
+            var dicomUrl = "https://raw.githubusercontent.com/wearemothership/dicom-test-files/main/dicom-ts-issues/parse-issue-19.dcm";
+
+            var response = await fetch(dicomUrl);
+
+            var buffer = await response.arrayBuffer();
+
+            function setData(buffer) {
+                data = new Int8Array(buffer);
             }
 
-            await setData(buffer);
-            await register();
-            await call();
-        }
+            
+
+    }
+
+            // function register() {
+            //     function loadImage(imageId) {
+            //         // Parse the imageId and return a usable URL (logic omitted)
+            //         console.log({ imageId, cornerstoneWADOImageLoader })
+            //         const url = cornerstoneWADOImageLoader.wadouri.parseImageId(imageId);
+            //         // const url = "http://localhost:3000/1.dcm"
+                    
+            //         console.log({url})
+
+            //         // Create a new Promise
+            //         const promise = new Promise((resolve, reject) => {
+            //             // Inside the Promise Constructor, make
+            //             // the request for the DICOM data
+            //             const oReq = new XMLHttpRequest();
+            //             oReq.open('get', url, true);
+            //             oReq.responseType = 'arraybuffer';
+            //             oReq.onreadystatechange = function (oEvent) {
+            //                 if (oReq.readyState === 4) {
+            //                     if (oReq.status == 200) {
+            //                         // Request succeeded, Create an image object (logic omitted)
+            //                         console.log({oReq})
+            //                         const image = createImageObject(oReq.response);
+
+
+            //                         // Return the image object by resolving the Promise
+            //                         resolve(image);
+            //                     } else {
+            //                         // An error occurred, return an object containing the error by
+            //                         // rejecting the Promise
+            //                         reject(new Error(oReq.statusText));
+            //                     }
+            //                 }
+            //             };
+
+            //             oReq.send();
+            //         });
+
+            //         // Return an object containing the Promise to cornerstone so it can setup callbacks to be
+            //         // invoked asynchronously for the success/resolve and failure/reject scenarios.
+            //         return {
+            //             promise,
+            //         };
+            //     }
+
+            //     // function getExampleImage(imageId) {
+
+            //     //     const width = 256;
+            //     //     const height = 256;
+            //     //     function getPixelData() {
+            //     //         if (imageId === 'example://1') {
+            //     //             console.log(data);
+            //     //             return data;
+            //     //         } else if (imageId === 'example://2') {
+            //     //             return data;
+            //     //         }
+
+            //     //         throw "unknown imageId";
+            //     //     }
+
+            //     //     var image = {
+            //     //         imageId: imageId,
+            //     //         minPixelValue: 0,
+            //     //         maxPixelValue: 257,
+            //     //         slope: 1.0,
+            //     //         intercept: 0,
+            //     //         windowCenter: 127,
+            //     //         windowWidth: 256,
+            //     //         getPixelData: getPixelData,
+            //     //         rows: height,
+            //     //         columns: width,
+            //     //         height: height,
+            //     //         width: width,
+            //     //         color: false,
+            //     //         columnPixelSpacing: .8984375,
+            //     //         rowPixelSpacing: .8984375,
+            //     //         sizeInBytes: width * height * 2
+            //     //     };
+
+            //     //     return {
+            //     //         promise: new Promise((resolve) => {
+            //     //             resolve(image);
+            //     //         }),
+            //     //         cancelFn: undefined
+            //     //     };
+            //     // }
+
+
+            //     console.log({cornerstone})
+            //     // registration
+            //     cornerstone.registerImageLoader('wadouri', loadImage);
+
+            // }
+
+            // function call() {
+            //     const imageIds = [
+            //         'wadouri:http://localhost:3000/1.dcm',
+            //         // 'wadouri://http://localhost:3000/2',
+            //     ];
+
+            //     let currentImageIndex = 0;
+
+            //     // updates the image display
+            //     function updateTheImage(imageIndex) {
+            //         return cornerstone.loadAndCacheImage(imageIds[imageIndex]).then(function (image) {
+            //             console.log({ image });
+            //             currentImageIndex = imageIndex;
+            //             const viewport = cornerstone.getViewport(element);
+            //             cornerstone.displayImage(element, image, viewport);
+            //         });
+
+            //         // return loadAndViewImage(imageIndex)
+            //     }
+
+            //     // image enable the element
+            //     const element = document.getElementById('dicomImage');
+            //     cornerstone.enable(element);
+
+            //     // setup handlers before we display the image
+            //     function onImageRendered(e) {
+            //         const eventData = e.detail;
+
+            //         // set the canvas context to the image coordinate system
+            //         cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
+
+            //         // NOTE: The coordinate system of the canvas is in image pixel space.  Drawing
+            //         // to location 0,0 will be the top left of the image and rows,columns is the bottom
+            //         // right.
+            //         const context = eventData.canvasContext;
+            //         context.beginPath();
+            //         context.strokeStyle = 'white';
+            //         context.lineWidth = .5;
+            //         context.rect(128, 90, 50, 60);
+            //         context.stroke();
+            //         context.fillStyle = "white";
+            //         context.font = "6px Arial";
+            //         context.fillText("Tumor Here", 128, 85);
+
+            //         document.getElementById('topright').textContent = "Render Time:" + eventData.renderTimeInMs + " ms";
+            //         document.getElementById('bottomleft').textContent = "WW/WL:" + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter);
+            //         document.getElementById('bottomright').textContent = "Zoom:" + eventData.viewport.scale.toFixed(2);
+
+            //     }
+            //     element.addEventListener('cornerstoneimagerendered', onImageRendered);
+
+            //     // load and display the image
+            //     const imagePromise = updateTheImage(0);
+
+            //     // add handlers for mouse events once the image is loaded.
+            //     imagePromise.then(function () {
+
+            //         // add event handlers to pan image on mouse move
+            //         element.addEventListener('mousedown', function (e) {
+            //             let lastX = e.pageX;
+            //             let lastY = e.pageY;
+            //             const mouseButton = e.which;
+
+            //             function mouseMoveHandler(e) {
+            //                 const deltaX = e.pageX - lastX;
+            //                 const deltaY = e.pageY - lastY;
+            //                 lastX = e.pageX;
+            //                 lastY = e.pageY;
+
+            //                 if (mouseButton === 1) {
+            //                     let viewport = cornerstone.getViewport(element);
+            //                     viewport.voi.windowWidth += (deltaX / viewport.scale);
+            //                     viewport.voi.windowCenter += (deltaY / viewport.scale);
+            //                     cornerstone.setViewport(element, viewport);
+            //                 } else if (mouseButton === 2) {
+            //                     let viewport = cornerstone.getViewport(element);
+            //                     viewport.translation.x += (deltaX / viewport.scale);
+            //                     viewport.translation.y += (deltaY / viewport.scale);
+            //                     cornerstone.setViewport(element, viewport);
+            //                 } else if (mouseButton === 3) {
+            //                     let viewport = cornerstone.getViewport(element);
+            //                     viewport.scale += (deltaY / 100);
+            //                     cornerstone.setViewport(element, viewport);
+            //                 }
+            //             }
+
+            //             function mouseUpHandler() {
+            //                 document.removeEventListener('mouseup', mouseUpHandler);
+            //                 document.removeEventListener('mousemove', mouseMoveHandler);
+            //             }
+
+            //             document.addEventListener('mousemove', mouseMoveHandler);
+            //             document.addEventListener('mouseup', mouseUpHandler);
+            //         });
+
+            //         const mouseWheelEvents = ['mousewheel', 'DOMMouseScroll'];
+            //         mouseWheelEvents.forEach(function (eventType) {
+            //             element.addEventListener(eventType, function (e) {
+            //                 // Firefox e.detail > 0 scroll back, < 0 scroll forward
+            //                 // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
+            //                 if (e.wheelDelta < 0 || e.detail > 0) {
+            //                     if (currentImageIndex === 0) {
+            //                         updateTheImage(1);
+            //                     }
+            //                 } else {
+            //                     if (currentImageIndex === 1) {
+            //                         updateTheImage(0);
+            //                     }
+            //                 }
+
+            //                 // Prevent page from scrolling
+            //                 return false;
+            //             });
+            //         });
+
+            //         // Add event handler to the ww/wc apply button
+            //         document.getElementById('x256').addEventListener('click', function (e) {
+            //             element.style.width = '256px';
+            //             element.style.height = '256px';
+            //             cornerstone.resize(element);
+            //         });
+
+            //         document.getElementById('x512').addEventListener('click', function (e) {
+            //             element.style.width = '512px';
+            //             element.style.height = '512px';
+            //             cornerstone.resize(element);
+            //         });
+
+            //         document.getElementById('invert').addEventListener('click', function (e) {
+            //             const viewport = cornerstone.getViewport(element);
+            //             viewport.invert = !viewport.invert;
+            //             cornerstone.setViewport(element, viewport);
+            //         });
+
+            //         document.getElementById('interpolation').addEventListener('click', function (e) {
+            //             const viewport = cornerstone.getViewport(element);
+            //             viewport.pixelReplication = !viewport.pixelReplication;
+            //             cornerstone.setViewport(element, viewport);
+            //         });
+            //         document.getElementById('hflip').addEventListener('click', function (e) {
+            //             const viewport = cornerstone.getViewport(element);
+            //             viewport.hflip = !viewport.hflip;
+            //             cornerstone.setViewport(element, viewport);
+            //         });
+            //         document.getElementById('vflip').addEventListener('click', function (e) {
+            //             const viewport = cornerstone.getViewport(element);
+            //             viewport.vflip = !viewport.vflip;
+            //             cornerstone.setViewport(element, viewport);
+            //         });
+            //         document.getElementById('rotate').addEventListener('click', function (e) {
+            //             const viewport = cornerstone.getViewport(element);
+            //             viewport.rotation += 90;
+            //             cornerstone.setViewport(element, viewport);
+            //         });
+
+            //         element.addEventListener('mousemove', function (event) {
+            //             const pixelCoords = cornerstone.pageToPixel(element, event.pageX, event.pageY);
+            //             document.getElementById('coords').textContent = "pageX=" + event.pageX + ", pageY=" + event.pageY + ", pixelX=" + pixelCoords.x + ", pixelY=" + pixelCoords.y;
+            //         });
+            //     });
+            // }
+
+            // await setData(buffer);
+            // await register();
+            // await call();
+        // }
     </script>
 
 
