@@ -170,12 +170,7 @@
             document.getElementById("dicomImage").style.transform = 'rotate(' + currentDeg + 'deg)';
         })
         $('.zoom-btn').change(function () {
-            if ($(this).val() == 1) {
-                $('#x512').trigger('click');
-            }
-            if ($(this).val() == 2) {
-                $('#x256').trigger('click');
-            }
+
         })
 
         cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
