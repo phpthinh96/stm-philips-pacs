@@ -35,16 +35,16 @@
     <div class="right-content">
             <div class="tool-button">
                 <button id="hflip-fake">
-                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <img src="./index_files/image/Undo.svg" />
                 </button>
                 <button id="vflip-fake">
-                    <i class="bi bi-arrow-clockwise"></i>
+                    <img src="./index_files/image/Redo.svg" />
                 </button>
                 <button>
-                    <i class="bi bi-info-square"></i>
+                    <img src="./index_files/image/Info.svg" />
                 </button>
                 <button>
-                    <i class="bi bi-app"></i>
+                    <img src="./index_files/image/Grid.svg" />
                 </button>
             </div>
             <div class="info">
@@ -64,15 +64,15 @@
                 <option value="1">Zoom</option>
                 <option value="2">Pan</option>
             </select>
-            <button class="reset-btn text-center">Reset</button>
-            <button class="help-btn"><i class="bi bi-patch-question"></i>Help</button>
+            <button id="reset" class="reset-btn text-center">Reset</button>
+            <button class="help-btn"><img src="./index_files/image/Help.svg" /></i><span>Help</span></button>
             <div class="current-datetime">
                 <p>EWS</p>
                 <p>15/06/2022 15:50:18</p>
             </div>
             <div class="current-filter">
-                <p>Zoom: 100%</p>
-                <p id="wl">WL: 127 WW: 255</p>
+                <p style="width: unset;" id="zoom">Zoom: 100%</p>
+                <p style="width: unset;" id="wl">WL: 127 WW: 255</p>
             </div>
             <div class="container">
                 <button id="x256" class="btn" style="display: none;">256x256</button>
@@ -94,7 +94,7 @@
                             width="512" height="512"></canvas>
                     </div>
 
-                    <div id="topleft" class="overlay" style="position:absolute;top:0px;left:0px;">
+                    <!-- <div id="topleft" class="overlay" style="position:absolute;top:0px;left:0px;">
                         Patient Name
                     </div>
                     <div id="topright" class="overlay" style="position:absolute;top:0px;right:0px;">
@@ -102,11 +102,11 @@
                     <div id="bottomright" class="overlay"
                         style="position:absolute;bottom:0px;right:0px;">Zoom:2.00</div>
                     <div id="bottomleft" class="overlay"
-                        style="position:absolute;bottom:0px;left:0px;">WW/WL:267/136</div>
+                        style="position:absolute;bottom:0px;left:0px;">WW/WL:267/136</div> -->
                 </div>
 
-                <div style=""><span id="coords">pageX=1400, pageY=614, pixelX=245,
-                        pixelY=170.203125</span></div>
+                <!-- <div style=""><span id="coords">pageX=1400, pageY=614, pixelX=245,
+                        pixelY=170.203125</span></div> -->
 
             </div>
 
@@ -143,6 +143,8 @@
     <!-- include the cornerstone library -->
     <script src="./index_files/cornerstone.min.js"></script>
     <script src="./index_files/cornerstoneMath.min.js"></script>
+    <script src="./index_files/cornerstoneTools.min.js"></script>
+
     <!-- <script src=""></script> -->
 
     <!-- include the dicomParser library as the WADO image loader depends on it -->
@@ -173,12 +175,6 @@
 
         })
 
-        import * as cornerstoneTools from "./index_files/cornerstoneTools.min.js";
-        
-        cornerstoneTools.init()
-        cornerstoneTools.setToolDisabled("zoom");
-        cornerstoneTools.setToolDisabled("pan"); 
-
         cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
         cornerstoneWADOImageLoader.configure({
             beforeSend: function (xhr) {
@@ -189,11 +185,13 @@
 
         const element = document.getElementById('dicomImage');
         cornerstone.enable(element);
+        var PanTool = false;
+        // cornerstoneTools.addTool(PanTool)
 
         // setup handlers before we display the image
         function onImageRendered(e) {
             const eventData = e.detail;
-
+            console.log("onImageRendered",{eventData});
             // set the canvas context to the image coordinate system
             cornerstone.setToPixelCoordinateSystem(eventData.enabledElement, eventData.canvasContext);
 
@@ -210,9 +208,8 @@
             context.font = "6px Arial";
             context.fillText("Tumor Here", 128, 85);
 
-            document.getElementById('topright').textContent = "Render Time:" + eventData.renderTimeInMs + " ms";
-            document.getElementById('wl').textContent = "WW/WL:" + Math.round(eventData.viewport.voi.windowWidth) + "/" + Math.round(eventData.viewport.voi.windowCenter);
-            document.getElementById('bottomright').textContent = "Zoom:" + eventData.viewport.scale.toFixed(2);
+            document.getElementById('wl').textContent = "WW: " + Math.round(eventData.viewport.voi.windowWidth) + "  WL: " + Math.round(eventData.viewport.voi.windowCenter);
+            document.getElementById('zoom').textContent = "Zoom: " + eventData.viewport.scale.toFixed(2) * 100 + "%";
 
         }
         element.addEventListener('cornerstoneimagerendered', onImageRendered);
@@ -223,18 +220,18 @@
                 const start = new Date().getTime();
                 cornerstone.loadImage(imageId).then(function(image) {
                     const viewport = cornerstone.getDefaultViewportForImage(element, image);
-                    document.getElementById('toggleModalityLUT').checked = (viewport.modalityLUT !== undefined);
-                    document.getElementById('toggleVOILUT').checked = (viewport.voiLUT !== undefined);
+                    // document.getElementById('toggleModalityLUT').checked = (viewport.modalityLUT !== undefined);
+                    // document.getElementById('toggleVOILUT').checked = (viewport.voiLUT !== undefined);
                     cornerstone.displayImage(element, image, viewport);
                     if(loaded === false) {
                         cornerstoneTools.mouseInput.enable(element);
                         cornerstoneTools.mouseWheelInput.enable(element);
                         cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
-                        cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
-                        cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
-                        cornerstoneTools.zoomWheel.activate(element); // zoom is the default tool for middle mouse wheel
+                        // cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
+                        // cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
+                        // cornerstoneTools.zoomWheel.activate(element); // zoom is the default tool for middle mouse wheel
 
-                        cornerstoneTools.imageStats.enable(element);
+                        // cornerstoneTools.imageStats.enable(element);
                         loaded = true;
                     }
 
@@ -317,62 +314,54 @@
                 imagePromise.then(function () {
 
                     // add event handlers to pan image on mouse move
-                    element.addEventListener('mousedown', function (e) {
-                        let lastX = e.pageX;
-                        let lastY = e.pageY;
-                        const mouseButton = e.which;
+    element.addEventListener('mousedown', function (e) {
+      if(PanTool) {
+        let lastX = e.pageX;
+      let lastY = e.pageY;
 
-                        function mouseMoveHandler(e) {
-                            const deltaX = e.pageX - lastX;
-                            const deltaY = e.pageY - lastY;
-                            lastX = e.pageX;
-                            lastY = e.pageY;
+      function mouseMoveHandler(e) {
+        const deltaX = e.pageX - lastX;
+        const deltaY = e.pageY - lastY;
+        lastX = e.pageX;
+        lastY = e.pageY;
 
-                            if (mouseButton === 1) {
-                                let viewport = cornerstone.getViewport(element);
-                                viewport.voi.windowWidth += (deltaX / viewport.scale);
-                                viewport.voi.windowCenter += (deltaY / viewport.scale);
-                                cornerstone.setViewport(element, viewport);
-                            } else if (mouseButton === 2) {
-                                let viewport = cornerstone.getViewport(element);
-                                viewport.translation.x += (deltaX / viewport.scale);
-                                viewport.translation.y += (deltaY / viewport.scale);
-                                cornerstone.setViewport(element, viewport);
-                            } else if (mouseButton === 3) {
-                                let viewport = cornerstone.getViewport(element);
-                                viewport.scale += (deltaY / 100);
-                                cornerstone.setViewport(element, viewport);
-                            }
-                        }
+        const viewport = cornerstone.getViewport(element);
+        viewport.translation.x += (deltaX / viewport.scale);
+        viewport.translation.y += (deltaY / viewport.scale);
+        cornerstone.setViewport(element, viewport);
+      }
 
-                        function mouseUpHandler() {
-                            document.removeEventListener('mouseup', mouseUpHandler);
-                            document.removeEventListener('mousemove', mouseMoveHandler);
-                        }
+      function mouseUpHandler() {
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+      }
 
-                        document.addEventListener('mousemove', mouseMoveHandler);
-                        document.addEventListener('mouseup', mouseUpHandler);
-                    });
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+      }
+    });
 
                     const mouseWheelEvents = ['mousewheel', 'DOMMouseScroll'];
-                    // mouseWheelEvents.forEach(function (eventType) {
-                    //     element.addEventListener(eventType, function (e) {
-                    //         // Firefox e.detail > 0 scroll back, < 0 scroll forward
-                    //         // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
-                    //         if (e.wheelDelta < 0 || e.detail > 0) {
-                    //             if (currentImageIndex === 0) {
-                    //                 updateTheImage(1);
-                    //             }
-                    //         } else {
-                    //             if (currentImageIndex === 1) {
-                    //                 updateTheImage(0);
-                    //             }
-                    //         }
+                    let currentImageIndex = 0;
+                    mouseWheelEvents.forEach(function (eventType) {
+                        element.addEventListener(eventType, function (e) {
+                            // Firefox e.detail > 0 scroll back, < 0 scroll forward
+                            // chrome/safari e.wheelDelta < 0 scroll back, > 0 scroll forward
+                            // if (e.wheelDelta < 0 || e.detail > 0) {
+                            //     if (currentImageIndex === 0) {
+                            //         updateTheImage(1);
+                            //     }
+                            // } else {
+                            //     if (currentImageIndex === 1) {
+                            //         updateTheImage(0);
+                            //     }
+                            // }
 
-                    //         // Prevent page from scrolling
-                    //         return false;
-                    //     });
-                    // });
+                            PanTool && cornerstone.setViewport(element, viewport);
+                            // Prevent page from scrolling
+                            return false;
+                        });
+                    });
 
                     // Add event handler to the ww/wc apply button
                     document.getElementById('x256').addEventListener('click', function (e) {
@@ -414,10 +403,49 @@
                         cornerstone.setViewport(element, viewport);
                     });
 
-                    element.addEventListener('mousemove', function (event) {
-                        const pixelCoords = cornerstone.pageToPixel(element, event.pageX, event.pageY);
-                        document.getElementById('coords').textContent = "pageX=" + event.pageX + ", pageY=" + event.pageY + ", pixelX=" + pixelCoords.x + ", pixelY=" + pixelCoords.y;
+                    // element.addEventListener('mousemove', function (event) {
+                    //     const pixelCoords = cornerstone.pageToPixel(element, event.pageX, event.pageY);
+                    //     document.getElementById('coords').textContent = "pageX=" + event.pageX + ", pageY=" + event.pageY + ", pixelX=" + pixelCoords.x + ", pixelY=" + pixelCoords.y;
+                    // });
+
+                    document.getElementById('reset').addEventListener('click', function (e) {
+        cornerstone.reset(element);
+        document.getElementById('demo-toolbar').value = 0;
+
+    });
+
+                    document.getElementById('demo-toolbar').addEventListener('change', function (e) {
+                        var selectValue = $(this).find(':selected').val();
+                        console.log({selectValue})
+                        switch (selectValue) {
+                        case "1":
+                            cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
+                            cornerstoneTools.zoomWheel.activate(element);
+                            cornerstoneTools.wwwc.activate(element, 1);
+                            cornerstoneTools.pan.disable(element); // pan is the default tool for middle mouse button
+                            PanTool = false;
+                        break;
+                        case "2":
+                        console.log("pan", {selectValue})
+                            cornerstoneTools.zoom.disable(element); // zoom is the default tool for right mouse button
+                            cornerstoneTools.zoomWheel.disable(element);
+                            cornerstoneTools.wwwc.disable(element);
+                            cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
+                            cornerstoneTools.panTouchDrag.activate(element)
+                            PanTool = true;
+                        break;
+                        default:
+                            cornerstoneTools.zoom.disable(element); // zoom is the default tool for right mouse button
+                            cornerstoneTools.zoomWheel.disable(element);
+                            cornerstoneTools.pan.disable(element); // pan is the default tool for middle mouse button
+                            PanTool = false;
+                        break;
+                        }
+
+                        console.log({cornerstoneTools})
                     });
+
+                    
                 });
             // }
         
